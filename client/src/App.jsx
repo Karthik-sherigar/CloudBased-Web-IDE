@@ -19,6 +19,7 @@ import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/ext-beautify";
+const BACKEND_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:9000';
 
 function App() {
   const [fileTree, setFileTree] = useState({});
@@ -104,7 +105,7 @@ function App() {
           oldPath = oldPath.replace(/\/+/g, '/').replace(/\/\//g, '/');
           newPath = newPath.replace(/\/+/g, '/').replace(/\/\//g, '/');
           console.log('Renaming:', { path, fileName, oldPath, newPath });
-          const response = await fetch('http://localhost:9000/files/rename', { 
+          const response = await fetch(`${BACKEND_URL}/files/rename`, { 
             method:'POST', 
             headers:{'Content-Type':'application/json'}, 
             body: JSON.stringify({ oldPath, newPath }) 
@@ -128,7 +129,7 @@ function App() {
           // Remove accidental double slashes
           deletePath = deletePath.replace(/\/+/g, '/').replace(/\/\//g, '/');
           console.log('Deleting:', { path, fileName, deletePath });
-          const response = await fetch('http://localhost:9000/files/delete', { 
+          const response = await fetch(`${BACKEND_URL}/files/delete`, { 
             method:'POST', 
             headers:{'Content-Type':'application/json'}, 
             body: JSON.stringify({ path: deletePath }) 
@@ -174,7 +175,7 @@ function App() {
 
   const getFileTree = async () => {
     console.log('getFileTree called');
-    const response = await fetch("http://localhost:9000/files");
+    const response = await fetch(`${BACKEND_URL}/files`);
     const result = await response.json();
     setFileTree(result.tree);
   };
@@ -204,7 +205,7 @@ function App() {
     }
 
     const response = await fetch(
-      `http://localhost:9000/files/content?path=${selectedFile}`
+      `${BACKEND_URL}/files/content?path=${selectedFile}`
     );
     const result = await response.json();
     setSelectedFileContent(result.content);
@@ -240,7 +241,7 @@ function App() {
 
   const downloadFolder = async (folderPath) => {
     try {
-      const response = await fetch(`http://localhost:9000/files/download-folder?path=${folderPath}`);
+      const response = await fetch(`${BACKEND_URL}/files/download-folder?path=${folderPath}`);
       if (!response.ok) {
         throw new Error(`Failed to download folder: ${response.statusText}`);
       }
@@ -394,7 +395,7 @@ function App() {
         const arrayBuffer = await file.arrayBuffer();
         const text = new TextDecoder().decode(arrayBuffer);
         const uploadPath = '/' + file.name; // root; user can move later
-        await fetch('http://localhost:9000/files/write', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ path: uploadPath, content: text }) })
+        await fetch(`${BACKEND_URL}/files/write`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ path: uploadPath, content: text }) })
         getFileTree();
         setSelectedFile(uploadPath);
       }} />
@@ -405,7 +406,7 @@ function App() {
           const arrayBuffer = await f.arrayBuffer();
           const text = new TextDecoder().decode(arrayBuffer);
           const rel = '/' + f.webkitRelativePath.replace(/\\/g, '/');
-          await fetch('http://localhost:9000/files/write', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ path: rel, content: text }) })
+          await fetch(`${BACKEND_URL}/files/write`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ path: rel, content: text }) })
         }
         getFileTree();
       }} />

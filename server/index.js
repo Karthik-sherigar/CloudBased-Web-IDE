@@ -320,7 +320,8 @@ app.get('/files/download-folder', async (req, res) => {
     }
 });
 
-server.listen(9000, () => console.log(`/docker server running on port 9000`))
+const PORT = process.env.PORT || 9000;
+server.listen(PORT, () => console.log(`/docker server running on port ${PORT}`))
 
 
 async function generateFileTree(directory) {
