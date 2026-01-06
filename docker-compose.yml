@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    volumes:
+      - ./server:/app
+      - ./server/user:/app/user
+    ports:
+      - "9000:9000"
+    environment:
+      - NODE_ENV=development
+    command: sh -c "npm install || true && npm run dev"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    volumes:
+      - ./client:/app
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_SERVER_URL=http://server:9000
+    depends_on:
+      - server
+    command: sh -c "npm install || true && npm run dev -- --host 0.0.0.0"

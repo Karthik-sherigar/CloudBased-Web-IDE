@@ -1,0 +1,44 @@
+/* Basic Reset & Global Styles */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif; /* Modern, clean font */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+   /* Dark background */
+  color: #e0e0e0; /* Light text for contrast */
+  overflow: hidden; /* Prevent scrollbars on main body */
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%); /* Subtle gradient */
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Scrollbar Styles for a modern look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2a2a4a; /* Darker track */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4a4a7a; /* Accent color for thumb */
+  border-radius: 10px;
+  border: 2px solid #2a2a4a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6a6a9a; /* Lighter accent on hover */
+}
