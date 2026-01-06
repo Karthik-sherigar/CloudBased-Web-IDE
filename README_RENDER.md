@@ -25,17 +25,23 @@ Render allows you to deploy Dockerized applications. Since our project has both 
 
 ---
 
-## 2️⃣ Deploying the Frontend (Client)
+## 2️⃣ Deploying the Frontend (Client) as a Static Site
 
-1.  Click **New +** and select **Web Service**.
+Deploying the frontend as a **Static Site** is faster and completely free on Render.
+
+1.  Click **New +** and select **Static Site**.
 2.  Connect the same GitHub repository.
 3.  **Configure the Service**:
     *   **Name**: `cloud-ide-client`
     *   **Root Directory**: `client`
-    *   **Runtime**: `Docker`
+    *   **Build Command**: `npm install && npm run build`
+    *   **Publish Directory**: `dist`
 4.  **Environment Variables**:
     *   Add a variable: `VITE_SERVER_URL` = `[YOUR_SERVER_URL]` (e.g., `https://cloud-ide-server.onrender.com`)
-5.  Click **Create Web Service**.
+5.  Click **Create Static Site**.
+
+> [!TIP]
+> Static sites are served via a global CDN, making your frontend load much faster than if it were in a container!
 
 ---
 
