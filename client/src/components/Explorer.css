@@ -1,0 +1,194 @@
+/* Explorer Component Styles - VS Code-like */
+
+.explorer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #252526;
+  color: #cccccc;
+}
+
+.explorer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background-color: #2d2d30;
+  border-bottom: 1px solid #3e3e42;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #cccccc;
+  min-height: 22px;
+}
+
+.explorer-title {
+  flex: 1;
+  user-select: none;
+}
+
+.explorer-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.explorer-action-btn {
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  opacity: 0.7;
+}
+
+.explorer-action-btn:hover {
+  background-color: #2a2d2e;
+  opacity: 1;
+}
+
+.explorer-action-btn:active {
+  background-color: #37373d;
+}
+
+.file-tree-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+  font-size: 13px;
+  user-select: none;
+}
+
+.file-tree-node {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  min-height: 22px;
+  position: relative;
+  color: #cccccc;
+  transition: background-color 0.1s;
+  padding-right: 8px;
+}
+
+.file-tree-node:hover {
+  background-color: #2a2d2e;
+}
+
+.file-tree-node.selected {
+  background-color: #37373d;
+}
+
+.file-tree-node.selected-folder {
+  background-color: #2a2d2e;
+}
+
+.node-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.node-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.file-tree-node.selected .node-name {
+  color: #ffffff;
+}
+
+/* Context Menu Styles */
+.context-menu {
+  background-color: #3c3c3c;
+  border: 1px solid #454545;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  padding: 4px 0;
+  min-width: 160px;
+  z-index: 1000;
+  font-size: 13px;
+  color: #cccccc;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 20px 4px 8px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+  gap: 8px;
+}
+
+.context-menu-item:hover {
+  background-color: #094771;
+  color: #ffffff;
+}
+
+.context-menu-icon {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+.context-menu-separator {
+  border: none;
+  border-top: 1px solid #454545;
+  margin: 4px 0;
+  padding: 0;
+}
+
+/* Copy notification */
+.copy-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #0e639c;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-size: 12px;
+  z-index: 2000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Scrollbar styling for explorer */
+.file-tree-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.file-tree-container::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.file-tree-container::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 5px;
+}
+
+.file-tree-container::-webkit-scrollbar-thumb:hover {
+  background: #4e4e4e;
+}

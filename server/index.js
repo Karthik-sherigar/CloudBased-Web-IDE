@@ -27,31 +27,10 @@ async function clearUserDirectory() {
         console.error('Error recreating user directory:', error);
     }
 }
-clearUserDirectory();
-
 
 let ptyProcess;
-try {
-    const pty = require('@homebridge/node-pty-prebuilt-multiarch')
-
-    ptyProcess = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
-        name: 'xterm-color',
-        cols: 80,
-        rows: 30,
-        cwd: (process.env.INIT_CWD || process.cwd()) + '/user',
-        env: process.env
-    });
-    console.log('PTY process started')
-} catch (err) {
-    console.warn('Could not start pty process. Terminal features will be disabled. Error:', err.message || err)
-    // provide a stub that is safe to call from the rest of the code
-    ptyProcess = {
-        write: () => {},
-        onData: () => {},
-        // allow registering onData callbacks but don't call them
-        on: () => {}
-    }
-}
+// Store the absolute path to the user directory for consistent use
+let userDirAbsolutePath = path.resolve(process.env.INIT_CWD || process.cwd(), 'user');
 
 const app = express()
 app.use(express.json({ limit: '50mb' }))
@@ -74,22 +53,67 @@ chokidar.watch('./user').on('all', (event, filePath) => {
     }
 });
 
-ptyProcess.onData(data => {
-    io.emit('terminal:data', data)
-})
+// Initialize PTY after user directory is ready
+async function initializePTY() {
+    // Ensure user directory exists before initializing PTY
+    await clearUserDirectory();
+
+    // Update the absolute path for the user directory (in case cwd changed)
+    userDirAbsolutePath = path.resolve(process.env.INIT_CWD || process.cwd(), 'user');
+
+    try {
+        const pty = require('@homebridge/node-pty-prebuilt-multiarch')
+
+        ptyProcess = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
+            name: 'xterm-color',
+            cols: 80,
+            rows: 30,
+            cwd: userDirAbsolutePath,
+            env: process.env
+        });
+        console.log(`PTY process started in directory: ${userDirAbsolutePath}`)
+
+        // Set up PTY data handler after initialization
+        ptyProcess.onData(data => {
+            console.log('PTY data received, broadcasting to clients:', data.substring(0, 50));
+            io.emit('terminal:data', data)
+        });
+    } catch (err) {
+        console.warn('Could not start pty process. Terminal features will be disabled. Error:', err.message || err)
+        // provide a stub that is safe to call from the rest of the code
+        ptyProcess = {
+            write: () => { },
+            onData: () => { },
+            // allow registering onData callbacks but don't call them
+            on: () => { }
+        }
+    }
+}
+
+// Initialize PTY asynchronously
+initializePTY();
 
 io.on('connection', (socket) => {
     console.log(`Socket connected`, socket.id)
 
     socket.emit('file:refresh')
 
+    // Trigger a fresh prompt in the terminal for the new client
+    if (ptyProcess && typeof ptyProcess.write === 'function') {
+        // Send a newline to trigger bash to show a prompt
+        ptyProcess.write('\n');
+    }
+
     socket.on('file:change', async ({ path, content }) => {
         await fs.writeFile(`./user${path}`, content)
     })
 
     socket.on('terminal:write', (data) => {
-        console.log('Term', data)
-        ptyProcess.write(data);
+        if (ptyProcess && typeof ptyProcess.write === 'function') {
+            ptyProcess.write(data);
+        } else {
+            console.warn('PTY process not ready, cannot write to terminal');
+        }
     })
 
     socket.on('run:file', async ({ path: relPath }) => {
@@ -97,7 +121,8 @@ io.on('connection', (socket) => {
             const clean = (relPath || '').replace(/^\/+/, '');
             const ext = clean.split('.').pop();
             const esc = (s) => s.replace(/"/g, '"');
-            const abs = `/app/user/${esc(clean)}`;
+            // Use the absolute user directory path instead of hardcoded /app/user
+            const abs = path.join(userDirAbsolutePath, esc(clean));
             let cmd = '';
             switch (ext) {
                 case 'py':
@@ -110,12 +135,12 @@ io.on('connection', (socket) => {
                     cmd = `node --loader ts-node/esm "${abs}"\r`;
                     break;
                 case 'c': {
-                    const out = `/app/user/${esc(clean.replace(/\.c$/, ''))}`;
+                    const out = path.join(userDirAbsolutePath, esc(clean.replace(/\.c$/, '')));
                     cmd = `gcc "${abs}" -O2 -o "${out}" && "${out}"\r`;
                     break;
                 }
                 case 'cpp': {
-                    const out = `/app/user/${esc(clean.replace(/\.cpp$/, ''))}`;
+                    const out = path.join(userDirAbsolutePath, esc(clean.replace(/\.cpp$/, '')));
                     cmd = `g++ "${abs}" -O2 -o "${out}" && "${out}"\r`;
                     break;
                 }
@@ -123,7 +148,7 @@ io.on('connection', (socket) => {
                     // compile and run main class based on file name
                     const base = clean.replace(/\.java$/, '');
                     const className = base.split('/').pop();
-                    const dir = base.includes('/') ? `/app/user/${base.substring(0, base.lastIndexOf('/'))}` : '/app/user';
+                    const dir = base.includes('/') ? path.join(userDirAbsolutePath, base.substring(0, base.lastIndexOf('/'))) : userDirAbsolutePath;
                     cmd = `javac "${abs}" && cd "${dir}" && java ${className}\r`;
                     break;
                 }
@@ -133,9 +158,15 @@ io.on('connection', (socket) => {
                 default:
                     cmd = `echo "No runner configured for *.${ext}"\r`;
             }
-            ptyProcess.write(cmd);
+            if (ptyProcess && typeof ptyProcess.write === 'function') {
+                ptyProcess.write(cmd);
+            } else {
+                socket.emit('terminal:data', '\r\nTerminal not ready. Please wait...\r\n');
+            }
         } catch (e) {
-            ptyProcess.write(`echo "Run error: ${e?.message || e}"\r`)
+            if (ptyProcess && typeof ptyProcess.write === 'function') {
+                ptyProcess.write(`echo "Run error: ${e?.message || e}"\r`)
+            }
         }
     })
 })

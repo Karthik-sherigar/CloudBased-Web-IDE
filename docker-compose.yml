@@ -23,7 +23,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_SERVER_URL=http://server:9000
+      - VITE_SERVER_URL=http://localhost:9000
     depends_on:
       - server
     command: sh -c "npm install || true && npm run dev -- --host 0.0.0.0"

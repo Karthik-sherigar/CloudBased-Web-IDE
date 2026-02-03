@@ -6,6 +6,7 @@ import { io } from 'socket.io-client'
 // 2. Otherwise fall back to VITE_SERVER_URL (set in Docker compose) or localhost.
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:9000'
 
+console.log('Socket.IO connecting to:', SERVER_URL);
 const socket = io(SERVER_URL)
 
 export default socket

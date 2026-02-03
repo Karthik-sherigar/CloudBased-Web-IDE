@@ -1,0 +1,494 @@
+import { useState, useMemo, useRef, useEffect } from 'react'
+import axios from 'axios';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getFileIcon } from '../utils/getFileIcon';
+import './Explorer.css';
+
+const BACKEND_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:9000';
+
+// Chevron icon for folders
+const Chevron = ({ open }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="none"
+    style={{
+      display: 'inline-block',
+      width: '16px',
+      height: '16px',
+      marginRight: '4px',
+      color: '#858585',
+      transition: 'transform 0.2s',
+      transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+      flexShrink: 0
+    }}
+  >
+    <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+// Folder icon
+const FolderIcon = ({ open }) => (
+  <span style={{ marginRight: '6px', fontSize: '16px' }}>
+    {open ? '📂' : '📁'}
+  </span>
+)
+
+// File icon with type detection
+const FileIcon = ({ fileName }) => (
+  <span style={{ marginRight: '6px', fontSize: '16px' }}>
+    {getFileIcon(fileName)}
+  </span>
+)
+
+// Context Menu Component
+const ContextMenu = ({ x, y, isDir, onAction, onClose }) => {
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [onClose]);
+
+  const menuItems = isDir
+    ? [
+      { id: 'newFile', label: 'New File', icon: '📄' },
+      { id: 'newFolder', label: 'New Folder', icon: '📁' },
+      { id: 'separator1' },
+      { id: 'rename', label: 'Rename', icon: '✏️' },
+      { id: 'delete', label: 'Delete', icon: '🗑️' },
+      { id: 'separator2' },
+      { id: 'download', label: 'Download', icon: '⬇️' },
+      { id: 'upload', label: 'Upload Files', icon: '⬆️' }
+    ]
+    : [
+      { id: 'open', label: 'Open', icon: '📂' },
+      { id: 'rename', label: 'Rename', icon: '✏️' },
+      { id: 'delete', label: 'Delete', icon: '🗑️' },
+      { id: 'separator1' },
+      { id: 'download', label: 'Download', icon: '⬇️' },
+      { id: 'copy', label: 'Copy Path', icon: '📋' }
+    ];
+
+  return (
+    <motion.div
+      ref={menuRef}
+      className="context-menu"
+      style={{
+        position: 'fixed',
+        left: `${x}px`,
+        top: `${y}px`,
+        zIndex: 1000
+      }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+    >
+      {menuItems.map((item, index) => {
+        if (item.id.startsWith('separator')) {
+          return <hr key={item.id} className="context-menu-separator" />;
+        }
+        return (
+          <div
+            key={item.id}
+            className="context-menu-item"
+            onClick={() => {
+              onAction(item.id);
+              onClose();
+            }}
+          >
+            <span className="context-menu-icon">{item.icon}</span>
+            <span>{item.label}</span>
+          </div>
+        );
+      })}
+    </motion.div>
+  );
+};
+
+// Explorer Header Component
+const ExplorerHeader = ({ onRefresh, onNewFile, onNewFolder, onCollapseAll, onUpload }) => {
+  return (
+    <div className="explorer-header">
+      <div className="explorer-title">
+        <span>EXPLORER</span>
+      </div>
+      <div className="explorer-actions">
+        <button
+          className="explorer-action-btn"
+          onClick={onNewFile}
+          title="New File"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M9 2H4C3.44772 2 3 2.44772 3 3V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V6L9 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M9 2V6H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M8 9V11M7 10H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+        <button
+          className="explorer-action-btn"
+          onClick={onNewFolder}
+          title="New Folder"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M8 8V11M6.5 9.5H9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+        <button
+          className="explorer-action-btn"
+          onClick={onRefresh}
+          title="Refresh"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M13.65 6.35C13.2 4.4 11.85 2.8 10 2.05C7.5 1.05 4.7 2 3.15 4.05M2.35 9.65C2.8 11.6 4.15 13.2 6 13.95C8.5 14.95 11.3 14 12.85 11.95" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 5V9H6M14 11V7H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
+          className="explorer-action-btn"
+          onClick={onCollapseAll}
+          title="Collapse All"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// File Tree Node Component
+const FileTreeNode = ({
+  node,
+  level,
+  onSelect,
+  onSelectFolder,
+  selectedFolder,
+  onFileAction,
+  selectedFile,
+  collapsedPaths,
+  toggleCollapse,
+  contextMenu,
+  setContextMenu
+}) => {
+  const nodeRef = useRef(null);
+  const isFolder = !!node.nodes;
+  const isSelected = selectedFile === node.path;
+  const isSelectedFolder = selectedFolder === node.path;
+  const isOpen = collapsedPaths[node.path] !== true;
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleNodeClick = (e) => {
+    e.stopPropagation();
+    if (isFolder) {
+      toggleCollapse(node.path);
+      onSelectFolder(node.path);
+    } else {
+      onSelect(node.path);
+    }
+  };
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      path: node.path,
+      name: node.name,
+      isDir: isFolder
+    });
+  };
+
+  const handleAction = (action) => {
+    onFileAction(action, node.path, node.name, isFolder);
+  };
+
+  const paddingLeft = level * 16 + 8;
+
+  return (
+    <>
+      <div
+        ref={nodeRef}
+        className={`file-tree-node ${isFolder ? 'folder-node' : 'file-node'} ${isSelected ? 'selected' : ''} ${isSelectedFolder ? 'selected-folder' : ''}`}
+        style={{ paddingLeft: `${paddingLeft}px` }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleNodeClick}
+        onContextMenu={handleContextMenu}
+      >
+        <div className="node-content">
+          {isFolder && <Chevron open={isOpen} />}
+          {!isFolder && !isOpen && <span style={{ width: '16px', display: 'inline-block' }} />}
+          {isFolder ? (
+            <FolderIcon open={isOpen} />
+          ) : (
+            <FileIcon fileName={node.name} />
+          )}
+          <span className="node-name" title={node.name}>
+            {node.name}
+          </span>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isFolder && isOpen && node.nodes && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {Object.entries(node.nodes)
+              .sort(([a], [b]) => {
+                // Sort: folders first, then files, both alphabetically
+                const aIsDir = node.nodes[a] !== null;
+                const bIsDir = node.nodes[b] !== null;
+                if (aIsDir && !bIsDir) return -1;
+                if (!aIsDir && bIsDir) return 1;
+                return a.localeCompare(b);
+              })
+              .map(([key, childValue]) => {
+                const childPath = `${node.path === '/' ? '' : node.path}/${key}`;
+                const childNode = childValue === null
+                  ? { name: key, path: childPath }
+                  : { name: key, path: childPath, nodes: childValue };
+
+                return (
+                  <FileTreeNode
+                    key={key}
+                    node={childNode}
+                    level={level + 1}
+                    onSelect={onSelect}
+                    onSelectFolder={onSelectFolder}
+                    selectedFolder={selectedFolder}
+                    onFileAction={onFileAction}
+                    selectedFile={selectedFile}
+                    collapsedPaths={collapsedPaths}
+                    toggleCollapse={toggleCollapse}
+                    contextMenu={contextMenu}
+                    setContextMenu={setContextMenu}
+                  />
+                );
+              })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+// Main Explorer Component
+const Explorer = ({
+  files,
+  onSelect,
+  onSelectFolder,
+  onFileAction,
+  selectedFile,
+  selectedFolder,
+  onRefresh,
+  onDownloadFolder,
+  onOpenFile,
+  onOpenFolder,
+  onHide
+}) => {
+  const [collapsedPaths, setCollapsedPaths] = useState({});
+  const [contextMenu, setContextMenu] = useState(null);
+  const [copiedPath, setCopiedPath] = useState(null);
+
+  const toggleCollapse = (path) => {
+    setCollapsedPaths(prev => ({
+      ...prev,
+      [path]: prev[path] === undefined ? false : !prev[path]
+    }));
+  };
+
+  const collapseAll = () => {
+    const allPaths = {};
+    const collectPaths = (nodes, basePath = '') => {
+      Object.entries(nodes || {}).forEach(([key, value]) => {
+        const path = basePath === '' ? `/${key}` : `${basePath}/${key}`;
+        if (value !== null) {
+          allPaths[path] = true;
+          collectPaths(value, path);
+        }
+      });
+    };
+    collectPaths(files);
+    setCollapsedPaths(allPaths);
+  };
+
+  const handleFileAction = async (action, path, name, isDir) => {
+    try {
+      switch (action) {
+        case 'newFile': {
+          const newFileName = prompt('Enter new file name:');
+          if (newFileName) {
+            const newPath = path === '/' ? `/${newFileName}` : `${path}/${newFileName}`;
+            await axios.post(`${BACKEND_URL}/files/create-file`, { path: newPath, content: '' });
+            onRefresh();
+            // Open the folder if it's collapsed
+            if (isDir && collapsedPaths[path] === true) {
+              toggleCollapse(path);
+            }
+          }
+          break;
+        }
+        case 'newFolder': {
+          const newFolderName = prompt('Enter new folder name:');
+          if (newFolderName) {
+            const newPath = path === '/' ? `/${newFolderName}` : `${path}/${newFolderName}`;
+            await axios.post(`${BACKEND_URL}/files/create-folder`, { path: newPath });
+            onRefresh();
+            if (collapsedPaths[path] === true) {
+              toggleCollapse(path);
+            }
+          }
+          break;
+        }
+        case 'rename': {
+          const newName = prompt(`Rename ${name} to:`, name);
+          if (newName && newName !== name) {
+            const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+            const newPath = parentPath === '/' ? `/${newName}` : `${parentPath}/${newName}`;
+            await axios.post(`${BACKEND_URL}/files/rename`, { oldPath: path, newPath });
+            onRefresh();
+          }
+          break;
+        }
+        case 'delete': {
+          if (window.confirm(`Are you sure you want to delete ${name}?`)) {
+            await axios.post(`${BACKEND_URL}/files/delete`, { path });
+            onRefresh();
+          }
+          break;
+        }
+        case 'download': {
+          if (isDir) {
+            onDownloadFolder(path);
+          } else {
+            try {
+              const response = await axios.get(`${BACKEND_URL}/files/content?path=${path}`, {
+                responseType: 'blob'
+              });
+              saveAs(response.data, name);
+            } catch (error) {
+              console.error('Error downloading file:', error);
+            }
+          }
+          break;
+        }
+        case 'upload': {
+          onOpenFolder();
+          break;
+        }
+        case 'open': {
+          if (!isDir) {
+            onSelect(path);
+            onOpenFile(path);
+          }
+          break;
+        }
+        case 'copy': {
+          navigator.clipboard.writeText(path);
+          setCopiedPath(path);
+          setTimeout(() => setCopiedPath(null), 2000);
+          break;
+        }
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action ${action}:`, error);
+      alert(`Error: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
+  const handleNewFileAtRoot = () => {
+    handleFileAction('newFile', '/', '', true);
+  };
+
+  const handleNewFolderAtRoot = () => {
+    handleFileAction('newFolder', '/', '', true);
+  };
+
+  return (
+    <div className="explorer-container">
+      <ExplorerHeader
+        onRefresh={onRefresh}
+        onNewFile={handleNewFileAtRoot}
+        onNewFolder={handleNewFolderAtRoot}
+        onCollapseAll={collapseAll}
+        onUpload={onOpenFolder}
+        onHide={onHide}
+      />
+      <div className="file-tree-container">
+        {Object.keys(files).length === 0 ? (
+          <div style={{ padding: '8px 12px', color: '#858585', fontStyle: 'italic', fontSize: '12px' }}>
+            No files in workspace
+          </div>
+        ) : (
+          Object.entries(files).map(([key, value]) => {
+            const childPath = `/${key}`;
+            const childNode = value === null
+              ? { name: key, path: childPath }
+              : { name: key, path: childPath, nodes: value };
+            return (
+              <FileTreeNode
+                key={key}
+                node={childNode}
+                level={0}
+                onSelect={onSelect}
+                onSelectFolder={onSelectFolder}
+                selectedFolder={selectedFolder}
+                onFileAction={handleFileAction}
+                selectedFile={selectedFile}
+                collapsedPaths={collapsedPaths}
+                toggleCollapse={toggleCollapse}
+                contextMenu={contextMenu}
+                setContextMenu={setContextMenu}
+              />
+            );
+          })
+        )}
+      </div>
+      <AnimatePresence>
+        {contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            isDir={contextMenu.isDir}
+            onAction={(action) => handleFileAction(action, contextMenu.path, contextMenu.name, contextMenu.isDir)}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
+      </AnimatePresence>
+      {copiedPath && (
+        <div className="copy-notification">Copied: {copiedPath}</div>
+      )}
+    </div>
+  );
+};
+
+export default Explorer;

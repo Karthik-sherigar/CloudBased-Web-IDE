@@ -3,8 +3,10 @@
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background-color: #1a1a2e; /* Dark background from global styles */
-  color: #e0e0e0; /* Light text from global styles */
+  background-color: #1a1a2e;
+  /* Dark background from global styles */
+  color: #e0e0e0;
+  /* Light text from global styles */
 }
 
 .vp-header {
@@ -12,12 +14,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background: linear-gradient(90deg, #2a2a4a 0%, #1a1a2e 100%); /* Header gradient */
+  background: linear-gradient(90deg, #2a2a4a 0%, #1a1a2e 100%);
+  /* Header gradient */
   border-bottom: 1px solid #3a3a5a;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   font-size: 1.1em;
   font-weight: bold;
-  color: #00e676; /* Accent color for branding */
+  color: #00e676;
+  /* Accent color for branding */
 }
 
 .vp-header-left,
@@ -41,7 +45,8 @@
   display: flex;
   flex: 1;
   overflow: hidden;
-  background-color: #1a1a2e; /* Ensure consistent background */
+  background-color: #1a1a2e;
+  /* Ensure consistent background */
 }
 
 .files-pane {
@@ -57,7 +62,8 @@
 .files-pane-header {
   padding: 10px 15px;
   font-weight: bold;
-  color: #00e676; /* Accent color */
+  color: #00e676;
+  /* Accent color */
   border-bottom: 1px solid #3a3a5a;
   background-color: #2a2a4a;
   text-transform: uppercase;
@@ -74,7 +80,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #0f0f1a; /* Slightly darker for editor area */
+  background-color: #0f0f1a;
+  /* Slightly darker for editor area */
 }
 
 .editor-header {
@@ -119,7 +126,7 @@
 
 .terminal-tabs {
   display: flex;
- 
+
   border-top: 1px solid #3a3a5a;
   padding: 5px 0;
 }
@@ -143,13 +150,24 @@
 }
 
 .terminal-container {
-  height: 200px; /* Fixed height for terminal */
+  height: 200px;
+  /* Fixed height for terminal */
   background-color: #0f0f1a;
   padding: 10px;
-  color: red;
-  overflow-y: auto;
+  overflow: hidden;
+  /* Changed from auto to hidden */
   border-top: 1px solid #3a3a5a;
+  position: relative;
+  /* Ensure proper stacking context */
 }
+
+.terminal-container #terminal {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
 
 .status-bar {
   display: flex;
@@ -180,7 +198,8 @@
 /* Buttons */
 .save-btn,
 .run-btn {
-  background: linear-gradient(45deg, #00e676, #1de9b6); /* Green gradient */
+  background: linear-gradient(45deg, #00e676, #1de9b6);
+  /* Green gradient */
   border: none;
   color: #1a1a2e;
   padding: 8px 15px;
@@ -207,7 +226,8 @@
 
 .file-node,
 .folder-node {
-  color: #b0b0b0; /* Lighter grey for file/folder names */
+  color: #b0b0b0;
+  /* Lighter grey for file/folder names */
   cursor: pointer;
   padding: 6px 10px;
   border-radius: 5px;
@@ -218,9 +238,12 @@
 
 .file-node:hover,
 .folder-node:hover {
-  background-color: rgba(0, 230, 118, 0.1); /* Subtle green hover */
-  color: #00e676; /* Accent color on hover */
-  transform: translateX(3px); /* Slight slide animation */
+  background-color: rgba(0, 230, 118, 0.1);
+  /* Subtle green hover */
+  color: #00e676;
+  /* Accent color on hover */
+  transform: translateX(3px);
+  /* Slight slide animation */
 }
 
 .folder-node.selected {
@@ -233,13 +256,15 @@
   background: linear-gradient(90deg, rgba(0, 230, 118, 0.2) 0%, rgba(0, 230, 118, 0) 100%);
   color: #00e676;
   font-weight: bold;
-  border-left: 3px solid #00e676; /* Highlight active file */
+  border-left: 3px solid #00e676;
+  /* Highlight active file */
   padding-left: 7px;
 }
 
 .context-menu {
   position: fixed;
-  background-color: #2a2a4a; /* Dark background for menu */
+  background-color: #2a2a4a;
+  /* Dark background for menu */
   border: 1px solid #3a3a5a;
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
@@ -247,7 +272,8 @@
   z-index: 1000;
   padding: 8px;
   pointer-events: auto;
-  animation: fadeIn 0.15s ease-out; /* Fade-in animation */
+  animation: fadeIn 0.15s ease-out;
+  /* Fade-in animation */
 }
 
 .context-menu button {
@@ -265,7 +291,8 @@
 }
 
 .context-menu button:hover {
-  background-color: #3a3a5a; /* Darker hover for menu items */
+  background-color: #3a3a5a;
+  /* Darker hover for menu items */
   color: #00e676;
   transform: translateX(2px);
 }
@@ -278,8 +305,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .context-menu-icons {
@@ -289,7 +323,8 @@
 }
 
 .context-menu-icon {
-  font-size: 0.8em; /* Adjust as needed for smaller icons */
+  font-size: 0.8em;
+  /* Adjust as needed for smaller icons */
   cursor: pointer;
   padding: 2px;
   border-radius: 3px;
@@ -299,4 +334,182 @@
 
 .context-menu-icon:hover {
   background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Show Explorer Button */
+.show-explorer-btn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #2a2a4a 0%, #1a1a2e 100%);
+  border-right: 1px solid #3a3a5a;
+  color: #00e676;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.75em;
+  transition: all 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.show-explorer-btn:hover {
+  background: linear-gradient(135deg, #3a3a5a 0%, #2a2a4a 100%);
+  box-shadow: 2px 0 16px rgba(0, 230, 118, 0.3);
+  width: 55px;
+}
+
+.show-explorer-btn svg {
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+
+.show-explorer-btn span {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 1px;
+}
+
+/* Adjust playground container to be relative for absolute positioning */
+.playground-container {
+  position: relative;
+}
+/* Status Indicator Styles */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+/* Ready state - green glowing dot */
+.status-ready .status-dot {
+  background-color: #00e676;
+  box-shadow: 0 0 10px #00e676, 0 0 20px #00e676, 0 0 30px #00e676;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Connecting state - yellow pulsing dot */
+.status-connecting .status-dot {
+  background-color: #ffd700;
+  box-shadow: 0 0 8px #ffd700;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Disconnected state - red dot */
+.status-disconnected .status-dot {
+  background-color: #ff4444;
+  box-shadow: 0 0 5px #ff4444;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Mobile Warning Modal */
+.mobile-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(10px);
+}
+
+.mobile-warning-modal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 100%);
+  border: 2px solid #ff4444;
+  border-radius: 16px;
+  padding: 40px 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(255, 68, 68, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.mobile-warning-icon {
+  font-size: 4em;
+  margin-bottom: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.mobile-warning-modal h2 {
+  color: #ff4444;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.mobile-warning-modal p {
+  color: #e0e0e0;
+  font-size: 1.1em;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.mobile-warning-subtitle {
+  color: #a0a0a0;
+  font-size: 0.9em !important;
+  margin-bottom: 25px !important;
+}
+
+.mobile-warning-btn {
+  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+  border: none;
+  color: white;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+}
+
+.mobile-warning-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 68, 68, 0.6);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Add margin to editor when explorer is hidden */
+.playground-container.explorer-hidden .editor-pane {
+  margin-left: 60px;
 }

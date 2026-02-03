@@ -27,7 +27,8 @@ function App() {
   const [code, setCode] = useState("");
   const [showFileMenu, setShowFileMenu] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState("/");
-  const [showMobileWarning, setShowMobileWarning] = useState(false);
+  const [explorerVisible, setExplorerVisible] = useState(true);
+
   // Status tracking
   const [socketConnected, setSocketConnected] = useState(false);
   const [terminalReady, setTerminalReady] = useState(false);
@@ -166,14 +167,6 @@ function App() {
       alert(`Error: ${error.message}`);
     }
   }
-
-  const handleNewFile = () => {
-    handleFileAction('createFile', selectedFolder, '');
-  };
-
-  const handleNewFolder = () => {
-    handleFileAction('createFolder', selectedFolder, '');
-  };
 
   const isSaved = selectedFileContent === code;
 
@@ -374,15 +367,15 @@ function App() {
         <div className="mobile-warning-overlay">
           <div className="mobile-warning-modal">
             <div className="mobile-warning-icon">⚠️</div>
-            <h2>Device Not Supported</h2>
-            <p>This system doesn't support your device.</p>
-            <p className="mobile-warning-subtitle">Please try to login using tablets, PC, or laptop for the best experience.</p>
-            {/* <button
+            <h2>Desktop Only</h2>
+            <p>This Cloud IDE system works only on tablets or PC, not on mobile devices.</p>
+            <p className="mobile-warning-subtitle">Please access this application from a larger screen for the best experience.</p>
+            <button
               className="mobile-warning-btn"
               onClick={() => setShowMobileWarning(false)}
             >
               Continue Anyway
-            </button> */}
+            </button>
           </div>
         </div>
       )}
@@ -397,29 +390,41 @@ function App() {
         </header>
 
         <div className="playground-container">
-          <aside className="files-pane">
-            <div className="files">
-              <Explorer
-                onSelect={(path) => {
-                  setSelectedFileContent("");
-                  setSelectedFile(path);
-                }}
-                onSelectFolder={(folderPath) => setSelectedFolder(folderPath || '/')}
-                selectedFolder={selectedFolder}
-                onFileAction={handleFileAction}
-                onDownloadFolder={downloadFolder}
-                onOpenFile={openFile}
-                onOpenFolder={openFolder}
-                onRefresh={getFileTree}
-                onNewFile={handleNewFile}
-                onNewFolder={handleNewFolder}
-                onCollapseAll={() => { }}
-                onUpload={() => document.getElementById('hidden-open-file').click()}
-                files={fileTree}
-                selectedFile={selectedFile}
-              />
-            </div>
-          </aside>
+          {explorerVisible && (
+            <aside className="files-pane">
+              <div className="files">
+                <Explorer
+                  onSelect={(path) => {
+                    setSelectedFileContent("");
+                    setSelectedFile(path);
+                  }}
+                  onSelectFolder={(folderPath) => setSelectedFolder(folderPath || '/')}
+                  selectedFolder={selectedFolder}
+                  onFileAction={handleFileAction}
+                  onDownloadFolder={downloadFolder}
+                  onOpenFile={openFile}
+                  onOpenFolder={openFolder}
+                  onRefresh={getFileTree}
+                  files={fileTree}
+                  selectedFile={selectedFile}
+                  onHide={() => setExplorerVisible(false)}
+                />
+              </div>
+            </aside>
+          )}
+
+          {!explorerVisible && (
+            <button
+              className="show-explorer-btn"
+              onClick={() => setExplorerVisible(true)}
+              title="Show Explorer"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Show Explorer</span>
+            </button>
+          )}
 
           <main className="editor-area">
             <div className="editor-header">
@@ -519,7 +524,7 @@ function App() {
           <div className="status-right">Cloud IDE Ready</div>
         </footer>
       </div>
-
+    </div>
     </>
   );
 }
